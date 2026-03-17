@@ -35,10 +35,14 @@ const DEFAULTS = {
   fontIndex: 0,
   paddingOuter: 40,
   backgroundStyle: "transparent",
-  exportPreset: "auto"
+  exportPreset: "auto",
+  isDarkMode: false,
+  dotPatternOpacity: 0.35,
+  dotPatternSpacing: 22,
+  dotPatternSize: 1
 };
 
-const STORAGE_KEY = "fintaro-logo-maker-settings-v2";
+const STORAGE_KEY = "fintaro-logo-maker-settings-v3";
 
 const PRESETS: Record<string, { label: string; ratio: number | null }> = {
   auto: { label: "Auto", ratio: null },
@@ -58,7 +62,7 @@ const BG_COLOR: Record<string, string | null> = {
 };
 
 export default function App() {
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(DEFAULTS.isDarkMode);
   const [showStar, setShowStar] = useState(true);
 
   const [ringRadius, setRingRadius] = useState(DEFAULTS.ringRadius);
@@ -80,9 +84,9 @@ export default function App() {
   const [backgroundStyle, setBackgroundStyle] = useState(DEFAULTS.backgroundStyle);
   const [exportPreset, setExportPreset] = useState(DEFAULTS.exportPreset);
 
-  const [dotPatternOpacity, setDotPatternOpacity] = useState(0.35);
-  const [dotPatternSpacing, setDotPatternSpacing] = useState(22);
-  const [dotPatternSize, setDotPatternSize] = useState(1);
+  const [dotPatternOpacity, setDotPatternOpacity] = useState(DEFAULTS.dotPatternOpacity);
+  const [dotPatternSpacing, setDotPatternSpacing] = useState(DEFAULTS.dotPatternSpacing);
+  const [dotPatternSize, setDotPatternSize] = useState(DEFAULTS.dotPatternSize);
 
   const [uploadedLogoUrl, setUploadedLogoUrl] = useState<string | null>(null);
   const [uploadedLogoName, setUploadedLogoName] = useState<string>("Kein Logo hochgeladen");
@@ -118,10 +122,10 @@ export default function App() {
     setPaddingOuter(cfg.paddingOuter ?? DEFAULTS.paddingOuter);
     setBackgroundStyle(cfg.backgroundStyle ?? DEFAULTS.backgroundStyle);
     setExportPreset(cfg.exportPreset ?? DEFAULTS.exportPreset);
-    setIsDarkMode(cfg.isDarkMode ?? true);
-    setDotPatternOpacity(cfg.dotPatternOpacity ?? 0.35);
-    setDotPatternSpacing(cfg.dotPatternSpacing ?? 22);
-    setDotPatternSize(cfg.dotPatternSize ?? 1);
+    setIsDarkMode(cfg.isDarkMode ?? DEFAULTS.isDarkMode);
+    setDotPatternOpacity(cfg.dotPatternOpacity ?? DEFAULTS.dotPatternOpacity);
+    setDotPatternSpacing(cfg.dotPatternSpacing ?? DEFAULTS.dotPatternSpacing);
+    setDotPatternSize(cfg.dotPatternSize ?? DEFAULTS.dotPatternSize);
   };
 
   useEffect(() => {
@@ -193,9 +197,10 @@ export default function App() {
     setPaddingOuter(DEFAULTS.paddingOuter);
     setBackgroundStyle(DEFAULTS.backgroundStyle);
     setExportPreset(DEFAULTS.exportPreset);
-    setDotPatternOpacity(0.35);
-    setDotPatternSpacing(22);
-    setDotPatternSize(1);
+    setIsDarkMode(DEFAULTS.isDarkMode);
+    setDotPatternOpacity(DEFAULTS.dotPatternOpacity);
+    setDotPatternSpacing(DEFAULTS.dotPatternSpacing);
+    setDotPatternSize(DEFAULTS.dotPatternSize);
   };
 
   const fgColor = isDarkMode ? "white" : "black";
