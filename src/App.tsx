@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Moon, Sun, RotateCcw, Play, Pause, ChevronLeft, ChevronRight } from "lucide-react";
+import { Moon, Sun, RotateCcw, Play, Pause, ChevronLeft, ChevronRight, Download, Upload } from "lucide-react";
 
 const FONTS = [
   { name: 'Fintaro', family: '"Fintaro", sans-serif' },
@@ -82,6 +82,8 @@ export default function App() {
   const [fontWeight, setFontWeight] = useState(DEFAULTS.fontWeight);
   const [fontIndex, setFontIndex] = useState(DEFAULTS.fontIndex);
   const [isAutoPlayingFonts, setIsAutoPlayingFonts] = useState(false);
+  const [uploadedLogoUrl, setUploadedLogoUrl] = useState<string | null>(null);
+  const [uploadedLogoName, setUploadedLogoName] = useState<string>("Kein Logo hochgeladen");
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
@@ -92,6 +94,12 @@ export default function App() {
     }
     return () => clearInterval(interval);
   }, [isAutoPlayingFonts]);
+
+  useEffect(() => {
+    return () => {
+      if (uploadedLogoUrl) URL.revokeObjectURL(uploadedLogoUrl);
+    };
+  }, [uploadedLogoUrl]);
 
   const resetToIdeal = () => {
     setRingRadius(DEFAULTS.ringRadius);
@@ -182,6 +190,126 @@ export default function App() {
     if (lineStyle === 2) return "url(#lineGradRight)";
     if (lineStyle === 3) return "url(#lineGradLeft)";
     return fgColor;
+  };
+
+
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ["image/svg+xml", "image/png", "image/jpeg"];
+    if (!allowedTypes.includes(file.type)) {
+      alert("Bitte nur SVG, PNG oder JPEG hochladen.");
+      return;
+    }
+
+    if (uploadedLogoUrl) URL.revokeObjectURL(uploadedLogoUrl);
+    const objectUrl = URL.createObjectURL(file);
+    setUploadedLogoUrl(objectUrl);
+    setUploadedLogoName(file.name);
+  };
+
+  const measureTextWidth = (text: string, size: number, weight: number, family: string) => {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return text.length * size * 0.6;
+    ctx.font = `${weight} ${size}px ${family}`;
+    return ctx.measureText(text).width;
+  };
+
+  const buildLogoSvgString = () => {
+    const text = "Fintaro";
+    const fontFamily = FONTS[fontIndex].family;
+    const textWidth = measureTextWidth(text, fontSize, fontWeight, fontFamily);
+
+    const padding = 32;
+    const contentHeight = Math.max(vbH, fontSize * 1.3);
+    const iconTop = padding + (contentHeight - vbH) / 2;
+    const textY = padding + contentHeight / 2;
+
+    const iconTranslateX = padding - vbX;
+    const iconTranslateY = iconTop - vbY;
+
+    const svgWidth = Math.ceil(padding * 2 + vbW + logoTextGap + textWidth);
+    const svgHeight = Math.ceil(padding * 2 + contentHeight);
+
+    const starSvg = showStar
+      ? `<g transform="translate(150 135) scale(${starSize}) translate(-150 -135)"><path d="M 150 100 Q 150 135 185 135 Q 150 135 150 170 Q 150 135 115 135 Q 150 135 150 100 Z" fill="${fgColor}" /></g>`
+      : "";
+
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}">
+  <defs>
+    <linearGradient id="lineGradEdges" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="${fgColor}" stop-opacity="0" />
+      <stop offset="50%" stop-color="${fgColor}" stop-opacity="1" />
+      <stop offset="100%" stop-color="${fgColor}" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="lineGradRight" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="${fgColor}" stop-opacity="1" />
+      <stop offset="100%" stop-color="${fgColor}" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="lineGradLeft" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="${fgColor}" stop-opacity="0" />
+      <stop offset="100%" stop-color="${fgColor}" stop-opacity="1" />
+    </linearGradient>
+    <linearGradient id="ringGradBottom" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${fgColor}" stop-opacity="1" />
+      <stop offset="100%" stop-color="${fgColor}" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="ringGradDiagonal" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="${fgColor}" stop-opacity="1" />
+      <stop offset="100%" stop-color="${fgColor}" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+  <g transform="translate(${iconTranslateX} ${iconTranslateY})">
+    <circle cx="150" cy="135" r="${ringRadius}" stroke="${getRingStroke()}" stroke-width="${ringThickness}" fill="none" />
+    ${starSvg}
+    <rect x="${150 - lineWidth / 2}" y="${135 + ringRadius + ringThickness / 2 + lineSpacing}" width="${lineWidth}" height="${lineHeight}" fill="${getLineFill()}" />
+  </g>
+  <text x="${padding + vbW + logoTextGap}" y="${textY}" dominant-baseline="middle" fill="${fgColor}" font-size="${fontSize}" font-weight="${fontWeight}" font-family="${fontFamily.replace(/"/g, "").replace(/,\s*sans-serif$/, ", sans-serif")}">${text}</text>
+</svg>`;
+  };
+
+  const triggerDownload = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadSvg = () => {
+    const svgString = buildLogoSvgString();
+    triggerDownload(new Blob([svgString], { type: "image/svg+xml;charset=utf-8" }), "fintaro-logo.svg");
+  };
+
+  const downloadRaster = async (format: "png" | "jpeg") => {
+    const svgString = buildLogoSvgString();
+    const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+    const svgUrl = URL.createObjectURL(svgBlob);
+
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      if (format === "jpeg") {
+        ctx.fillStyle = isDarkMode ? "#0a0a0a" : "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      ctx.drawImage(img, 0, 0);
+      canvas.toBlob((blob) => {
+        if (blob) triggerDownload(blob, `fintaro-logo.${format === "jpeg" ? "jpg" : "png"}`);
+      }, format === "jpeg" ? "image/jpeg" : "image/png", 0.95);
+      URL.revokeObjectURL(svgUrl);
+    };
+    img.src = svgUrl;
   };
 
   return (
@@ -308,6 +436,28 @@ export default function App() {
           <Slider label="Abstand Logo-Text" value={logoTextGap} min={0} max={200} step={1} onChange={setLogoTextGap} />
         </div>
 
+        {/* Import / Export */}
+        <div className={`p-5 rounded-2xl flex flex-col gap-4 ${panelBg}`}>
+          <h2 className="text-sm font-semibold uppercase tracking-wider opacity-80">Import / Export</h2>
+          <label className={`w-full h-10 px-3 rounded-lg border flex items-center justify-center gap-2 text-sm cursor-pointer transition-colors ${isDarkMode ? 'bg-black/40 border-white/10 hover:bg-white/10 text-white' : 'bg-white/60 border-black/10 hover:bg-black/5 text-black'}`}>
+            <Upload size={16} />
+            Logo hochladen (SVG/PNG/JPEG)
+            <input type="file" accept=".svg,.png,.jpg,.jpeg,image/svg+xml,image/png,image/jpeg" className="hidden" onChange={handleLogoUpload} />
+          </label>
+          <p className={`text-xs ${mutedText}`}>{uploadedLogoName}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <button onClick={downloadSvg} className={`h-9 px-3 rounded-lg text-sm border flex items-center justify-center gap-2 ${isDarkMode ? 'bg-black/40 border-white/10 hover:bg-white/10 text-white' : 'bg-white/60 border-black/10 hover:bg-black/5 text-black'}`}>
+              <Download size={14} /> SVG
+            </button>
+            <button onClick={() => downloadRaster('png')} className={`h-9 px-3 rounded-lg text-sm border flex items-center justify-center gap-2 ${isDarkMode ? 'bg-black/40 border-white/10 hover:bg-white/10 text-white' : 'bg-white/60 border-black/10 hover:bg-black/5 text-black'}`}>
+              <Download size={14} /> PNG
+            </button>
+            <button onClick={() => downloadRaster('jpeg')} className={`h-9 px-3 rounded-lg text-sm border flex items-center justify-center gap-2 ${isDarkMode ? 'bg-black/40 border-white/10 hover:bg-white/10 text-white' : 'bg-white/60 border-black/10 hover:bg-black/5 text-black'}`}>
+              <Download size={14} /> JPEG
+            </button>
+          </div>
+        </div>
+
       </motion.div>
 
       {/* Main Preview Area */}
@@ -316,6 +466,15 @@ export default function App() {
         {/* Background Grid Pattern for Editor Feel */}
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
              style={{ backgroundImage: `radial-gradient(${fgColor} 1px, transparent 1px)`, backgroundSize: '24px 24px' }} />
+
+
+        {uploadedLogoUrl && (
+          <img
+            src={uploadedLogoUrl}
+            alt="Hochgeladenes Referenzlogo"
+            className="absolute max-w-[70%] max-h-[70%] object-contain opacity-15 pointer-events-none"
+          />
+        )}
 
         <motion.div 
           className="flex flex-col md:flex-row items-center justify-center relative z-10"
