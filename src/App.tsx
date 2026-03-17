@@ -80,6 +80,10 @@ export default function App() {
   const [backgroundStyle, setBackgroundStyle] = useState(DEFAULTS.backgroundStyle);
   const [exportPreset, setExportPreset] = useState(DEFAULTS.exportPreset);
 
+  const [dotPatternOpacity, setDotPatternOpacity] = useState(0.35);
+  const [dotPatternSpacing, setDotPatternSpacing] = useState(22);
+  const [dotPatternSize, setDotPatternSize] = useState(1);
+
   const [uploadedLogoUrl, setUploadedLogoUrl] = useState<string | null>(null);
   const [uploadedLogoName, setUploadedLogoName] = useState<string>("Kein Logo hochgeladen");
 
@@ -95,29 +99,36 @@ export default function App() {
     });
   }, []);
 
+
+  const applyConfig = (cfg: any) => {
+    setRingRadius(cfg.ringRadius ?? DEFAULTS.ringRadius);
+    setRingThickness(cfg.ringThickness ?? DEFAULTS.ringThickness);
+    setRingStyle(cfg.ringStyle ?? DEFAULTS.ringStyle);
+    setStarSize(cfg.starSize ?? DEFAULTS.starSize);
+    setLineWidth(cfg.lineWidth ?? DEFAULTS.lineWidth);
+    setLineHeight(cfg.lineHeight ?? DEFAULTS.lineHeight);
+    setLineSpacing(cfg.lineSpacing ?? DEFAULTS.lineSpacing);
+    setLineStyle(cfg.lineStyle ?? DEFAULTS.lineStyle);
+    setLogoScale(cfg.logoScale ?? DEFAULTS.logoScale);
+    setLogoTextGap(cfg.logoTextGap ?? DEFAULTS.logoTextGap);
+    setFontSize(cfg.fontSize ?? DEFAULTS.fontSize);
+    setFontWeight(cfg.fontWeight ?? DEFAULTS.fontWeight);
+    setFontIndex(cfg.fontIndex ?? DEFAULTS.fontIndex);
+    setShowStar(cfg.showStar ?? true);
+    setPaddingOuter(cfg.paddingOuter ?? DEFAULTS.paddingOuter);
+    setBackgroundStyle(cfg.backgroundStyle ?? DEFAULTS.backgroundStyle);
+    setExportPreset(cfg.exportPreset ?? DEFAULTS.exportPreset);
+    setIsDarkMode(cfg.isDarkMode ?? true);
+    setDotPatternOpacity(cfg.dotPatternOpacity ?? 0.35);
+    setDotPatternSpacing(cfg.dotPatternSpacing ?? 22);
+    setDotPatternSize(cfg.dotPatternSize ?? 1);
+  };
+
   useEffect(() => {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
     try {
-      const cfg = JSON.parse(raw);
-      setRingRadius(cfg.ringRadius ?? DEFAULTS.ringRadius);
-      setRingThickness(cfg.ringThickness ?? DEFAULTS.ringThickness);
-      setRingStyle(cfg.ringStyle ?? DEFAULTS.ringStyle);
-      setStarSize(cfg.starSize ?? DEFAULTS.starSize);
-      setLineWidth(cfg.lineWidth ?? DEFAULTS.lineWidth);
-      setLineHeight(cfg.lineHeight ?? DEFAULTS.lineHeight);
-      setLineSpacing(cfg.lineSpacing ?? DEFAULTS.lineSpacing);
-      setLineStyle(cfg.lineStyle ?? DEFAULTS.lineStyle);
-      setLogoScale(cfg.logoScale ?? DEFAULTS.logoScale);
-      setLogoTextGap(cfg.logoTextGap ?? DEFAULTS.logoTextGap);
-      setFontSize(cfg.fontSize ?? DEFAULTS.fontSize);
-      setFontWeight(cfg.fontWeight ?? DEFAULTS.fontWeight);
-      setFontIndex(cfg.fontIndex ?? DEFAULTS.fontIndex);
-      setShowStar(cfg.showStar ?? true);
-      setPaddingOuter(cfg.paddingOuter ?? DEFAULTS.paddingOuter);
-      setBackgroundStyle(cfg.backgroundStyle ?? DEFAULTS.backgroundStyle);
-      setExportPreset(cfg.exportPreset ?? DEFAULTS.exportPreset);
-      setIsDarkMode(cfg.isDarkMode ?? true);
+      applyConfig(JSON.parse(raw));
     } catch {
       // ignore invalid JSON
     }
@@ -142,10 +153,13 @@ export default function App() {
       paddingOuter,
       backgroundStyle,
       exportPreset,
-      isDarkMode
+      isDarkMode,
+      dotPatternOpacity,
+      dotPatternSpacing,
+      dotPatternSize
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg, null, 2));
-  }, [ringRadius, ringThickness, ringStyle, starSize, lineWidth, lineHeight, lineSpacing, lineStyle, logoScale, logoTextGap, fontSize, fontWeight, fontIndex, showStar, paddingOuter, backgroundStyle, exportPreset, isDarkMode]);
+  }, [ringRadius, ringThickness, ringStyle, starSize, lineWidth, lineHeight, lineSpacing, lineStyle, logoScale, logoTextGap, fontSize, fontWeight, fontIndex, showStar, paddingOuter, backgroundStyle, exportPreset, isDarkMode, dotPatternOpacity, dotPatternSpacing, dotPatternSize]);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
@@ -179,6 +193,9 @@ export default function App() {
     setPaddingOuter(DEFAULTS.paddingOuter);
     setBackgroundStyle(DEFAULTS.backgroundStyle);
     setExportPreset(DEFAULTS.exportPreset);
+    setDotPatternOpacity(0.35);
+    setDotPatternSpacing(22);
+    setDotPatternSize(1);
   };
 
   const fgColor = isDarkMode ? "white" : "black";
@@ -271,6 +288,22 @@ export default function App() {
     a.download = "fintaro-logo-settings.json";
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+
+  const importJsonSettings = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const cfg = JSON.parse(text);
+      applyConfig(cfg);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg, null, 2));
+    } catch {
+      alert("Ungültige JSON-Datei.");
+    } finally {
+      event.target.value = "";
+    }
   };
 
   const measureFintaroWidth = (text: string) => {
@@ -429,6 +462,9 @@ export default function App() {
         <div className={`p-4 rounded-2xl flex flex-col gap-4 ${panelBg}`}>
           <h2 className="text-sm font-semibold uppercase tracking-wider opacity-80">Export / JSON</h2>
           <Slider label="Padding außen" value={paddingOuter} min={0} max={300} step={1} onChange={setPaddingOuter} />
+          <Slider label="Datarad Deckkraft" value={dotPatternOpacity} min={0} max={0.8} step={0.01} onChange={setDotPatternOpacity} />
+          <Slider label="Datarad Abstand" value={dotPatternSpacing} min={10} max={48} step={1} onChange={setDotPatternSpacing} />
+          <Slider label="Datarad Punktgröße" value={dotPatternSize} min={0.5} max={2.5} step={0.1} onChange={setDotPatternSize} />
           <div className="grid grid-cols-2 gap-2">
             <select value={backgroundStyle} onChange={(e) => setBackgroundStyle(e.target.value)} className={`h-9 px-2 rounded-lg text-sm border ${isDarkMode ? "bg-black/40 border-white/10 text-white" : "bg-white/60 border-black/10 text-black"}`}>
               <option value="transparent">Hintergrund: Transparent</option>
@@ -452,14 +488,25 @@ export default function App() {
             <button onClick={downloadSvg} className={`h-9 px-3 rounded-lg text-sm border flex items-center justify-center gap-2 ${isDarkMode ? "bg-black/40 border-white/10" : "bg-white/60 border-black/10"}`}><Download size={14} /> SVG</button>
             <button onClick={() => downloadRaster("png")} className={`h-9 px-3 rounded-lg text-sm border flex items-center justify-center gap-2 ${isDarkMode ? "bg-black/40 border-white/10" : "bg-white/60 border-black/10"}`}><Download size={14} /> PNG</button>
             <button onClick={() => downloadRaster("jpeg")} className={`h-9 px-3 rounded-lg text-sm border flex items-center justify-center gap-2 ${isDarkMode ? "bg-black/40 border-white/10" : "bg-white/60 border-black/10"}`}><Download size={14} /> JPG</button>
-            <button onClick={exportJsonSettings} className={`h-9 px-3 rounded-lg text-sm border flex items-center justify-center gap-2 ${isDarkMode ? "bg-black/40 border-white/10" : "bg-white/60 border-black/10"}`}><FileJson size={14} /> JSON</button>
+            <button onClick={exportJsonSettings} className={`h-9 px-3 rounded-lg text-sm border flex items-center justify-center gap-2 ${isDarkMode ? "bg-black/40 border-white/10" : "bg-white/60 border-black/10"}`}><FileJson size={14} /> JSON Export</button>
           </div>
+          <label className={`w-full h-9 px-3 rounded-lg border flex items-center justify-center gap-2 text-sm cursor-pointer ${isDarkMode ? "bg-black/40 border-white/10" : "bg-white/60 border-black/10"}`}>
+            <FileJson size={14} /> JSON Import
+            <input type="file" accept="application/json,.json" className="hidden" onChange={importJsonSettings} />
+          </label>
           <p className={`text-[11px] ${mutedText}`}>Settings werden automatisch als JSON gespeichert (LocalStorage).</p>
         </div>
       </motion.div>
 
       <div className="flex-1 flex items-center justify-center p-8 lg:p-14 overflow-hidden relative min-h-[50vh]">
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `radial-gradient(${fgColor} 1px, transparent 1px)`, backgroundSize: "24px 24px" }} />
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: `radial-gradient(rgba(203,213,225,0.7) ${dotPatternSize}px, transparent ${dotPatternSize}px)`,
+            backgroundSize: `${dotPatternSpacing}px ${dotPatternSpacing}px`,
+            opacity: dotPatternOpacity
+          }}
+        />
 
         <motion.div
           className="relative z-10 w-full max-w-[1100px] border rounded-2xl overflow-hidden"
