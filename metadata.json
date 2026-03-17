@@ -1,0 +1,5 @@
+{
+  "name": "SVG Logo Recreator",
+  "description": "Recreates a specific logo in SVG with the line moved to the bottom.",
+  "requestFramePermissions": []
+}
