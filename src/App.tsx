@@ -34,15 +34,15 @@ const DEFAULTS = {
   fontWeight: 700,
   fontIndex: 0,
   paddingOuter: 40,
-  backgroundStyle: "transparent",
-  exportPreset: "auto",
+  backgroundStyle: "white",
+  exportPreset: "16:9",
   isDarkMode: false,
-  dotPatternOpacity: 0.35,
+  dotPatternOpacity: 0.24,
   dotPatternSpacing: 22,
   dotPatternSize: 1
 };
 
-const STORAGE_KEY = "fintaro-logo-maker-settings-v3";
+const STORAGE_KEY = "fintaro-logo-maker-settings-v4";
 
 const PRESETS: Record<string, { label: string; ratio: number | null }> = {
   auto: { label: "Auto", ratio: null },
@@ -407,6 +407,7 @@ export default function App() {
 
   const previewBg = BG_COLOR[backgroundStyle] ?? "transparent";
   const previewRatio = PRESETS[exportPreset]?.ratio || undefined;
+  const dotColor = isDarkMode ? "rgba(55,65,81,1)" : "rgba(226,232,240,1)";
 
   return (
     <div className={`min-h-screen flex flex-col lg:flex-row ${bgColor} ${textColor} transition-colors duration-500 font-sans`}>
@@ -507,7 +508,7 @@ export default function App() {
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
-            backgroundImage: `radial-gradient(rgba(203,213,225,0.7) ${dotPatternSize}px, transparent ${dotPatternSize}px)`,
+            backgroundImage: `radial-gradient(${dotColor} ${dotPatternSize}px, transparent ${dotPatternSize}px)`,
             backgroundSize: `${dotPatternSpacing}px ${dotPatternSpacing}px`,
             opacity: dotPatternOpacity
           }}
